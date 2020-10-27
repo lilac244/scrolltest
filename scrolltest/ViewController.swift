@@ -144,8 +144,10 @@ class ViewController: NSViewController, NSWindowDelegate {
         })
         
         if let timer = self.timer {
-            timer.invalidate()
-            print("stop timer")
+            if timer.isValid {
+                print("stop timer")
+                timer.invalidate()
+            }
         }
         
         self.timer = nil
