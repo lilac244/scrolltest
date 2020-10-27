@@ -13,7 +13,8 @@ class ViewController: NSViewController, NSWindowDelegate {
     @IBOutlet weak var clipView: NSClipView!
     @IBOutlet var textView: NSTextView!
     
-    var addPointY: CGFloat = 10000
+    var duration: Double = 5
+    var addPointY: CGFloat = 100
     var count = 0;
     var timer: Timer?
     
@@ -39,32 +40,94 @@ class ViewController: NSViewController, NSWindowDelegate {
         
         self.count += 1
         
-        NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 120
-            // 一定速度アニメーション
-            context.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.linear)
-            var nextPoint = self.clipView.bounds.origin
-            nextPoint.y = (self.addPointY * CGFloat(self.count))
-            self.clipView.animator().setBoundsOrigin(nextPoint)
-            //self.scrollView.reflectScrolledClipView(self.scrollView.contentView)
-        }, completionHandler: {
+        var pt = self.clipView.bounds.origin
+        
+        /*
+        // CABasicAnimation
+        // スクロールはできたけど、テキストビュー側の表示がうまくいかない
+        let animation = CABasicAnimation(keyPath: "bounds")
+        animation.duration = 120
+        //animation.repeatCount = .infinity
+        var b = self.clipView.bounds
+        animation.fromValue = b
+        b.origin.y = (self.addPointY * CGFloat(self.count))
+        animation.toValue = b
+        animation.autoreverses = true
+        self.clipView.layer?.add(animation, forKey: "test")
+         */
+        
+        self.startAnimation()
+        
+        if self.count != 1 {
+            return
+        }
+        
+        self.timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { timer in
+            print("timer event")
+            
+            // アニメーション中の値を取得する場合はlayer.presentationを使用
+            guard let clipView = self.clipView.layer?.presentation() else {
+                self.stopAnimation()
+                return
+            }
+            
+            let origin = clipView.bounds.origin
+            
+            // 最下部まで到達した場合
+            if (origin.y + self.clipView.bounds.height) >= self.textView.bounds.height {
+                self.stopAnimation()
+                return
+            }
         })
         
-        if self.count == 1 {
-            self.timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { timer in
-                guard let clipView = self.clipView.layer?.presentation() else {
-                    self.stopAnimation()
-                    return
-                }
-                
-                // アニメーション中の値を取得する場合はlayer.presentationを使用
-                let pt = clipView.bounds.origin
-                
-                if (pt.y + self.clipView.bounds.height) >= self.textView.bounds.height {
-                    self.stopAnimation()
-                }
+        /*
+        // 上書きバージョン
+         // ストップが・・・
+        self.timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { timer in
+            guard let clipView = self.clipView.layer?.presentation() else {
+                self.stopAnimation()
+                return
+            }
+            
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 1
+                // 一定速度アニメーション
+                context.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.linear)
+                var nextPoint = clipView.bounds.origin
+                nextPoint.y += (100 * CGFloat(self.count))
+                self.clipView.animator().setBoundsOrigin(nextPoint)
+            }, completionHandler: {
             })
-        }
+
+            // アニメーション中の値を取得する場合はlayer.presentationを使用
+            let pt = clipView.bounds.origin
+            
+            if (pt.y + self.clipView.bounds.height) >= self.textView.bounds.height {
+                self.stopAnimation()
+            }
+        })
+        */
+        
+    }
+    
+    func startAnimation() {
+        print("animation")
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = self.duration
+            // 一定速度アニメーション
+            context.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.linear)
+            var origin = self.clipView.bounds.origin
+            origin.y += (self.addPointY * CGFloat(self.count))
+            self.clipView.animator().setBoundsOrigin(origin)
+            //self.scrollView.reflectScrolledClipView(self.scrollView.contentView)
+        }, completionHandler: {
+            if let timer = self.timer {
+                if timer.isValid {
+                    print("restart")
+                    self.startAnimation()
+                }
+            }
+        })
     }
     
     func stopAnimation() {
@@ -72,12 +135,12 @@ class ViewController: NSViewController, NSWindowDelegate {
         
         self.count = 0
         
-        NSAnimationContext.beginGrouping()
-        NSAnimationContext.current.duration = 0
-        let nextPoint = self.clipView.bounds.origin
-        self.clipView.animator().setBoundsOrigin(nextPoint)
-        //self.scrollView.reflectScrolledClipView(self.scrollView.contentView)
-        NSAnimationContext.endGrouping()
+        // stop animation
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.1
+            self.clipView.animator().setBoundsOrigin(self.clipView.bounds.origin)
+        }, completionHandler: {
+        })
         
         if let timer = self.timer {
             timer.invalidate()
