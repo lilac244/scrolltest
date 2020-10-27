@@ -40,8 +40,6 @@ class ViewController: NSViewController, NSWindowDelegate {
         
         self.count += 1
         
-        var pt = self.clipView.bounds.origin
-        
         /*
         // CABasicAnimation
         // スクロールはできたけど、テキストビュー側の表示がうまくいかない
@@ -112,6 +110,7 @@ class ViewController: NSViewController, NSWindowDelegate {
     
     func startAnimation() {
         print("animation")
+        
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = self.duration
             // 一定速度アニメーション
@@ -121,6 +120,8 @@ class ViewController: NSViewController, NSWindowDelegate {
             self.clipView.animator().setBoundsOrigin(origin)
             //self.scrollView.reflectScrolledClipView(self.scrollView.contentView)
         }, completionHandler: {
+            print("completionHandler")
+            
             if let timer = self.timer {
                 if timer.isValid {
                     print("restart")
