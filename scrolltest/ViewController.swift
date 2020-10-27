@@ -46,7 +46,7 @@ class ViewController: NSViewController, NSWindowDelegate {
             var nextPoint = self.clipView.bounds.origin
             nextPoint.y = (self.addPointY * CGFloat(self.count))
             self.clipView.animator().setBoundsOrigin(nextPoint)
-            self.scrollView.reflectScrolledClipView(self.scrollView.contentView)
+            //self.scrollView.reflectScrolledClipView(self.scrollView.contentView)
         }, completionHandler: {
         })
         
